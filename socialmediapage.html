@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Homepage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+        }
+        header {
+            background-color: #4267B2;
+            color: white;
+            padding: 1em;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .post {
+            margin-bottom: 20px;
+        }
+        .post-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .post-header img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .post-header .username {
+            font-weight: bold;
+            color: #333;
+        }
+        .post-content {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .comments {
+            margin-left: 20px;
+        }
+        .comment {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .comment img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .comment-text {
+            background-color: #f0f2f5;
+            padding: 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            color: #333;
+        }
+    </style>
+    <script>
+        const userNames = {
+            1: 'Aarav',
+            2: 'Ishita',
+            3: 'Kabir',
+            4: 'Ananya',
+            5: 'Riya',
+            6: 'Arjun',
+            7: 'Sneha',
+            8: 'Vivaan',
+            9: 'Priya',
+            10: 'Krish'
+        };
+
+        let currentPostIndex = 0;
+        const postsPerPage = 5;
+        let isFetching = false;
+
+        async function fetchPostsAndComments() {
+            if (isFetching) return;
+            isFetching = true;
+
+            const postsContainer = document.querySelector('.container');
+
+            try {
+                // Fetch posts
+                const postsResponse = await fetch(`https://jsonplaceholder.typicode.com/posts?_start=${currentPostIndex}&_limit=${postsPerPage}`);
+                const posts = await postsResponse.json();
+
+                if (posts.length === 0) {
+                    isFetching = false;
+                    return;
+                }
+
+                currentPostIndex += postsPerPage;
+
+                for (const post of posts) {
+                    const postElement = document.createElement('div');
+                    postElement.classList.add('post');
+
+                    const userName = userNames[post.userId] || `User ${post.userId}`;
+
+                    postElement.innerHTML = `
+                        <div class="post-header">
+                            <img src="https://picsum.photos/40?random=${post.userId}" alt="User Profile">
+                            <span class="username">${userName}</span>
+                        </div>
+                        <div class="post-content">
+                            <h3>${post.title}</h3>
+                            <p>${post.body}</p>
+                        </div>
+                        <div class="comments">
+                            <h4>Comments:</h4>
+                        </div>
+                    `;
+
+                    postsContainer.appendChild(postElement);
+
+                    // Fetch comments for the current post
+                    const commentsResponse = await fetch(`https://jsonplaceholder.typicode.com/comments?postId=${post.id}`);
+                    const comments = await commentsResponse.json();
+
+                    const commentsContainer = postElement.querySelector('.comments');
+
+                    for (const comment of comments) {
+                        const commentElement = document.createElement('div');
+                        commentElement.classList.add('comment');
+
+                        commentElement.innerHTML = `
+                            <img src="https://picsum.photos/30?random=${comment.id}" alt="Comment User Profile">
+                            <div class="comment-text">
+                                <strong>${comment.name}</strong>: ${comment.body}
+                            </div>
+                        `;
+
+                        commentsContainer.appendChild(commentElement);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching posts or comments:', error);
+            } finally {
+                isFetching = false;
+            }
+        }
+
+        function setupInfiniteScroll() {
+            window.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+
+                if (scrollTop + clientHeight >= scrollHeight - 5) {
+                    fetchPostsAndComments();
+                }
+            });
+        }
+
+        window.onload = () => {
+            fetchPostsAndComments();
+            setupInfiniteScroll();
+        };
+    </script>
+</head>
+<body>
+    <header>
+        <h1>My Social Media</h1>
+    </header>
+    <div class="container">
+        <!-- Posts and comments will be loaded here -->
+    </div>
+</body>
+</html>
